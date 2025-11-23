@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Independent Designer Portfolio</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: black; }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        // We use the ?deps=react@18.2.0 query parameter to ensure all libraries share the exact same React instance.
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
+        import { motion, AnimatePresence, useScroll, useTransform, useMotionValue } from 'https://esm.sh/framer-motion@10.16.4?deps=react@18.2.0,react-dom@18.2.0';
+        import { ArrowLeft, Plus, ArrowUpRight, Mail } from 'https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0';
+
+        /* --- MOCK DATA --- */
+        const projects = [
+            {
+                id: 1,
+                title: "The Regeneration Suite",
+                subtitle: "A Restorative & Immersive Experience",
+                category: "Immersive Web",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1550780595-09c063b06c88?q=80&w=2787&auto=format&fit=crop",
+                description: "To celebrate 100 years of Gucci, we partnered with The Savoy to create an immersive experience that honours regeneration. A digital sanctuary where nature and luxury intertwine.",
+                credits: [
+                    { role: "Lead Designer", name: "Alex Morgan" },
+                    { role: "Agency", name: "AKQA Amsterdam" },
+                    { role: "Client", name: "Gucci / The Savoy" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Simplicity & Tactility",
+                subtitle: "Redefining Digital Touch",
+                category: "Product Design",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?q=80&w=2942&auto=format&fit=crop",
+                description: "An exploration of haptic feedback in visual interfaces. We stripped back the unnecessary to focus purely on the sensation of time passing.",
+                credits: [
+                    { role: "Art Director", name: "Sarah Chen" },
+                    { role: "Studio", name: "Mono Design" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Reimagining Loyalty",
+                subtitle: "Connection Beyond Transaction",
+                category: "Brand Strategy",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=2550&auto=format&fit=crop",
+                description: "A complete overhaul of the loyalty program for a major fashion house, focusing on emotional resonance rather than points collection.",
+                credits: [
+                    { role: "Strategy", name: "James Wilson" },
+                    { role: "Visuals", name: "Luna Creative" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Urban Silence",
+                subtitle: "Noise Cancellation Campaign",
+                category: "Advertising",
+                year: "2022",
+                image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=3386&auto=format&fit=crop",
+                description: "Finding peace in the chaos of the city. A campaign shot entirely in 5 major capitals during rush hour.",
+                credits: [
+                    { role: "Photographer", name: "Davide Rossi" },
+                    { role: "Creative Dir.", name: "Elena S." }
+                ]
+            },
+            {
+                id: 5,
+                title: "Aether",
+                subtitle: "The Scent of Space",
+                category: "Packaging",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=2832&auto=format&fit=crop",
+                description: "Packaging design for a conceptual fragrance line inspired by the nebulae of deep space.",
+                credits: [
+                    { role: "3D Artist", name: "Marcus V." }
+                ]
+            },
+            {
+                id: 6,
+                title: "Kinetic Soul",
+                subtitle: "Motion Language System",
+                category: "Motion",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=2938&auto=format&fit=crop",
+                description: "Developing a comprehensive motion language for a global sports brand.",
+                credits: [
+                    { role: "Motion Lead", name: "Jessica T." }
+                ]
+            },
+        ];
+
+        /* --- COMPONENTS --- */
+
+        const CustomCursor = () => {
+            const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+            const [isHovering, setIsHovering] = useState(false);
+
+            useEffect(() => {
+                const updateMousePosition = (e) => {
+                    setMousePosition({ x: e.clientX, y: e.clientY });
+                };
+                
+                const handleMouseOver = (e) => {
+                    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('[role="button"]')) {
+                        setIsHovering(true);
+                    } else {
+                        setIsHovering(false);
+                    }
+                };
+
+                window.addEventListener('mousemove', updateMousePosition);
+                window.addEventListener('mouseover', handleMouseOver);
+
+                return () => {
+                    window.removeEventListener('mousemove', updateMousePosition);
+                    window.removeEventListener('mouseover', handleMouseOver);
+                };
+            }, []);
+
+            return (
+                <React.Fragment>
+                    <motion.div
+                        className="fixed top-0 left-0 w-2 h-2 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference"
+                        animate={{
+                            x: mousePosition.x - 4,
+                            y: mousePosition.y - 4,
+                            scale: isHovering ? 0 : 1
+                        }}
+                        transition={{ type: "tween", ease: "backOut", duration: 0.1 }}
+                    />
+                    <motion.div
+                        className="fixed top-0 left-0 w-8 h-8 border border-white rounded-full pointer-events-none z-[9999] mix-blend-difference"
+                        animate={{
+                            x: mousePosition.x - 16,
+                            y: mousePosition.y - 16,
+                            scale: isHovering ? 1.5 : 1,
+                            opacity: isHovering ? 1 : 0.5
+                        }}
+                        transition={{ type: "tween", ease: "backOut", duration: 0.15 }}
+                    />
+                </React.Fragment>
+            );
+        };
+
+        const Loader = ({ onComplete }) => {
+            const [count, setCount] = useState(0);
+
+            useEffect(() => {
+                const duration = 1500; // Slightly faster loader
+                const intervalTime = 20;
+                const steps = duration / intervalTime;
+                let currentStep = 0;
+
+                const interval = setInterval(() => {
+                    currentStep++;
+                    const progress = Math.min(Math.round((currentStep / steps) * 100), 100);
+                    setCount(progress);
+
+                    if (currentStep >= steps) {
+                        clearInterval(interval);
+                        setTimeout(onComplete, 500);
+                    }
+                }, intervalTime);
+
+                return () => clearInterval(interval);
+            }, [onComplete]);
+
+            return (
+                <motion.div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black text-white"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }}
+                >
+                    <div className="text-sm font-medium tabular-nums tracking-widest">
+                        {count}%
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const Header = ({ currentView, onNavigate }) => (
+            <motion.header
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+                className="fixed top-0 left-0 w-full px-8 py-6 z-40 flex justify-between items-start mix-blend-difference text-white"
+            >
+                <div className="flex gap-8 text-sm font-medium tracking-wide uppercase">
+                    <button 
+                        onClick={() => onNavigate('work')}
+                        className={`cursor-pointer hover:opacity-100 transition-opacity ${currentView === 'work' ? 'opacity-100' : 'opacity-50'}`}
+                        role="button"
+                    >
+                        Work
+                    </button>
+                    <button 
+                        onClick={() => onNavigate('about')}
+                        className={`cursor-pointer hover:opacity-100 transition-opacity ${currentView === 'about' ? 'opacity-100' : 'opacity-50'}`}
+                        role="button"
+                    >
+                        About
+                    </button>
+                </div>
+                
+                <div className="hidden md:block text-xs opacity-50 uppercase tracking-widest text-right">
+                    Independent Designer<br />& Art Director
+                </div>
+            </motion.header>
+        );
+
+        const About = () => {
+            return (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="fixed inset-0 bg-black z-20 pt-32 px-6 md:px-20 pb-20 overflow-y-auto no-scrollbar text-white"
+                >
+                    <div className="max-w-4xl mx-auto">
+                        <motion.h1 
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="text-4xl md:text-7xl font-light tracking-tight mb-12 leading-tight"
+                        >
+                            Crafting digital experiences that exist at the intersection of technology, art, and human emotion.
+                        </motion.h1>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-32">
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                                className="space-y-6 text-lg text-white/70 leading-relaxed"
+                            >
+                                <p>
+                                    I am an independent designer and art director with over a decade of experience working with global brands and early-stage startups. My approach is rooted in reduction—stripping away the noise to reveal the essential core of a story.
+                                </p>
+                                <p>
+                                    Currently based in New York, operating globally. I am available for freelance projects, art direction, and design consultation.
+                                </p>
+                                <div className="pt-8">
+                                    <a href="mailto:hello@example.com" role="button" className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full font-medium hover:scale-105 transition-transform duration-300">
+                                        <Mail size={18} />
+                                        <span>Get in Touch</span>
+                                    </a>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.6 }}
+                            >
+                                <h3 className="text-xs uppercase tracking-widest text-white/40 mb-8">Services</h3>
+                                <ul className="space-y-4 mb-16">
+                                    <li className="border-b border-white/10 pb-4">Art Direction</li>
+                                    <li className="border-b border-white/10 pb-4">UI/UX Design</li>
+                                    <li className="border-b border-white/10 pb-4">Brand Identity</li>
+                                    <li className="border-b border-white/10 pb-4">Motion Design</li>
+                                    <li className="border-b border-white/10 pb-4">Creative Development</li>
+                                </ul>
+
+                                <h3 className="text-xs uppercase tracking-widest text-white/40 mb-8">Connect</h3>
+                                <div className="flex flex-col gap-4 items-start">
+                                    <a href="#" className="group flex items-center gap-2 hover:text-white/60 transition-colors" role="button">
+                                        <span>Instagram</span>
+                                        <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </a>
+                                    <a href="#" className="group flex items-center gap-2 hover:text-white/60 transition-colors" role="button">
+                                        <span>Twitter / X</span>
+                                        <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </a>
+                                    <a href="#" className="group flex items-center gap-2 hover:text-white/60 transition-colors" role="button">
+                                        <span>LinkedIn</span>
+                                        <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </a>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const ProjectDetail = ({ project, onBack, onNext }) => {
+            const containerRef = useRef(null);
+            const { scrollYProgress } = useScroll({ container: containerRef });
+            
+            const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+            const textY = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"]);
+
+            // Calculate next project
+            const currentIndex = projects.findIndex(p => p.id === project.id);
+            const nextProject = projects[(currentIndex + 1) % projects.length];
+
+            // Scroll to top on project change
+            useEffect(() => {
+                if(containerRef.current) {
+                    containerRef.current.scrollTop = 0;
+                }
+            }, [project]);
+
+            return (
+                <motion.div
+                    ref={containerRef}
+                    className="fixed inset-0 bg-[#0a0a0a] z-30 overflow-y-auto no-scrollbar"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                >
+                    <button
+                        onClick={onBack}
+                        className="fixed top-6 left-6 z-50 flex items-center gap-2 text-white mix-blend-difference group"
+                        role="button"
+                    >
+                        <div className="p-2 border border-white/20 rounded-full group-hover:bg-white group-hover:text-black transition-colors duration-300">
+                            <ArrowLeft size={16} />
+                        </div>
+                        <span className="text-sm font-medium uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300 -translate-x-2 group-hover:translate-x-0">Back</span>
+                    </button>
+
+                    <div className="relative h-[85vh] w-full overflow-hidden">
+                        <motion.div 
+                            className="absolute inset-0 w-full h-full"
+                            style={{ y: imageY }}
+                        >
+                            <motion.img
+                                layoutId={`image-${project.id}`}
+                                src={project.image}
+                                alt={project.title}
+                                className="w-full h-full object-cover brightness-[0.8]"
+                                transition={{
+                                    duration: 0.8,
+                                    ease: [0.6, 0.01, -0.05, 0.9]
+                                }}
+                            />
+                        </motion.div>
+
+                        <motion.div 
+                            style={{ y: textY }}
+                            className="absolute inset-0 flex flex-col items-center justify-center text-white pointer-events-none"
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4, duration: 0.8 }}
+                                className="text-center px-4"
+                            >
+                                <h1 className="text-4xl md:text-7xl lg:text-8xl font-light tracking-tight mb-4">
+                                    {project.title}
+                                </h1>
+                                <p className="text-lg md:text-2xl font-light opacity-80 max-w-2xl mx-auto">
+                                    {project.subtitle}
+                                </p>
+                            </motion.div>
+                        </motion.div>
+
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1, duration: 1 }}
+                            className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 text-xs uppercase tracking-widest animate-bounce"
+                        >
+                            Scroll Down
+                        </motion.div>
+                    </div>
+
+                    <div className="relative z-10 bg-[#0a0a0a] min-h-screen px-6 py-24 md:px-20 md:py-32">
+                        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-16 text-white">
+                            <div className="md:col-span-4 space-y-12">
+                                <div>
+                                    <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Project Details</h3>
+                                    <div className="space-y-2">
+                                        <p className="text-lg">{project.category}</p>
+                                        <p className="text-lg text-white/60">{project.year}</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Credits</h3>
+                                    <ul className="space-y-4">
+                                        {project.credits.map((credit, i) => (
+                                            <li key={i}>
+                                                <span className="block text-xs text-white/40 uppercase mb-1">{credit.role}</span>
+                                                <span className="text-lg">{credit.name}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-8">
+                                <h3 className="text-2xl md:text-4xl lg:text-5xl font-light leading-tight mb-12">
+                                    {project.description}
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="aspect-[4/5] bg-neutral-800 overflow-hidden">
+                                        <img src={project.image} className="w-full h-full object-cover opacity-80 hover:scale-105 transition-transform duration-700" alt="Detail 1" />
+                                    </div>
+                                    <div className="aspect-[4/5] bg-neutral-800 overflow-hidden md:mt-20">
+                                        <img src={project.image} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" alt="Detail 2" />
+                                    </div>
+                                </div>
+                                <p className="mt-12 text-lg text-white/60 leading-relaxed max-w-2xl">
+                                    This project represented a shift in how we approach digital design. By focusing on the core user experience and stripping away superfluous elements, we achieved a result that feels both modern and timeless. The interplay of light and shadow was crucial in defining the visual language.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-40 border-t border-white/10 pt-20 group">
+                            <h4 className="text-xs uppercase tracking-widest text-white/40 mb-8">Next Project</h4>
+                            <div 
+                                onClick={() => onNext(nextProject)}
+                                className="text-4xl md:text-6xl text-white/80 cursor-pointer hover:text-white transition-colors flex items-center justify-between"
+                                role="button"
+                            >
+                                <span>{nextProject.title}</span>
+                                <ArrowUpRight className="opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-500" size={48} />
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const SliderItem = ({ project, onSelect }) => {
+            return (
+                <motion.div
+                    className="relative shrink-0 w-[60vw] md:w-[25vw] aspect-[3/4] group"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.4 }}
+                >
+                    <motion.div
+                        layoutId={`image-${project.id}`}
+                        onClick={onSelect}
+                        className="w-full h-full overflow-hidden bg-neutral-900 cursor-pointer relative"
+                    >
+                        <img
+                            src={project.image}
+                            alt={project.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                        />
+                        
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+                        
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white">
+                                <Plus size={20} />
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        className="absolute top-full left-0 mt-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 pointer-events-none"
+                    >
+                        <h3 className="text-lg md:text-xl font-light leading-none">{project.title}</h3>
+                        <p className="text-xs text-white/50 mt-1 uppercase tracking-wider">{project.category}</p>
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        const Slider = ({ onSelect }) => {
+            const containerRef = useRef(null);
+            const x = useMotionValue(0);
+
+            return (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                    className="relative w-full h-screen flex items-center overflow-hidden cursor-grab active:cursor-grabbing"
+                >
+                    <motion.div 
+                        className="flex gap-4 px-[50vw] md:gap-8 md:px-[30vw]"
+                        drag="x"
+                        style={{ x }}
+                        dragConstraints={{ left: -2000, right: 0 }} 
+                        dragElastic={0.1}
+                        dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+                    >
+                        {projects.map((project, index) => (
+                            <SliderItem 
+                                key={project.id} 
+                                project={project} 
+                                index={index} 
+                                onSelect={() => onSelect(project)} 
+                            />
+                        ))}
+                    </motion.div>
+
+                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 text-white text-xs font-medium tracking-widest uppercase mix-blend-difference pointer-events-none">
+                        1 — {projects.length}
+                    </div>
+                    
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20vw] font-bold text-white/[0.03] pointer-events-none select-none -z-10">
+                        WORK
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const App = () => {
+            const [loading, setLoading] = useState(true);
+            const [view, setView] = useState('work'); // 'work', 'about', 'project'
+            const [selectedProject, setSelectedProject] = useState(null);
+
+            // Handle Navigation
+            const handleNavigate = (target) => {
+                setSelectedProject(null);
+                setView(target);
+            };
+
+            // Handle Project Selection
+            const handleSelectProject = (project) => {
+                setSelectedProject(project);
+                setView('project');
+            };
+
+            // Handle Next Project Logic
+            const handleNextProject = (project) => {
+                setSelectedProject(null); // Reset momentarily to trigger transition
+                setTimeout(() => {
+                    setSelectedProject(project);
+                    setView('project');
+                }, 50);
+            };
+
+            useEffect(() => {
+                if (view === 'project' || view === 'about') {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = 'auto';
+                }
+            }, [view]);
+
+            return (
+                <div className="bg-black min-h-screen text-white font-sans selection:bg-white selection:text-black">
+                    <div className="hidden md:block">
+                        <CustomCursor />
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        {loading ? (
+                            <Loader key="loader" onComplete={() => setLoading(false)} />
+                        ) : (
+                            <motion.div key="content" className="relative">
+                                <Header 
+                                    currentView={view === 'project' ? 'work' : view} 
+                                    onNavigate={handleNavigate} 
+                                />
+                                
+                                <AnimatePresence mode="wait">
+                                    {view === 'about' && (
+                                        <About key="about" />
+                                    )}
+                                    
+                                    {view === 'project' && selectedProject && (
+                                        <ProjectDetail 
+                                            key="detail" 
+                                            project={selectedProject} 
+                                            onBack={() => handleNavigate('work')}
+                                            onNext={handleNextProject}
+                                        />
+                                    )}
+                                    
+                                    {view === 'work' && (
+                                        <Slider key="slider" onSelect={handleSelectProject} />
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
