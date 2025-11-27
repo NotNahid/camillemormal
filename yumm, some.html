@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camille Mormal — Independent Designer</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #050505; 
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef, useLayoutEffect } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
+        import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useAnimationFrame, LayoutGroup } from 'https://esm.sh/framer-motion@10.16.4?deps=react@18.2.0,react-dom@18.2.0';
+        import { ArrowLeft, Plus, Minus, Mail, ArrowUpRight } from 'https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0';
+
+        /* --- DATA --- */
+        const projects = [
+            {
+                id: 1,
+                title: "The Regeneration Suite",
+                subtitle: "Immersive Web Experience",
+                category: "Web / 3D",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+                description: "A digital sanctuary where nature and luxury intertwine.",
+                credits: [{ role: "Lead", name: "Alex M." }, { role: "Agency", name: "AKQA" }]
+            },
+            {
+                id: 2,
+                title: "Tactile Simplicity",
+                subtitle: "Redefining Digital Touch",
+                category: "Product",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop",
+                description: "Stripping back the unnecessary to focus purely on the sensation of time passing.",
+                credits: [{ role: "Art Dir", name: "Sarah C." }]
+            },
+            {
+                id: 3,
+                title: "Aether Scent",
+                category: "Packaging",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=2832&auto=format&fit=crop",
+                description: "Packaging design for a conceptual fragrance line.",
+                credits: [{ role: "3D", name: "Marcus V." }]
+            },
+            {
+                id: 4,
+                title: "Urban Silence",
+                category: "Campaign",
+                year: "2022",
+                image: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=2940&auto=format&fit=crop",
+                description: "Finding peace in the chaos of the city.",
+                credits: [{ role: "Photo", name: "Davide R." }]
+            },
+            {
+                id: 5,
+                title: "Kinetic Soul",
+                category: "Branding",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=2938&auto=format&fit=crop",
+                description: "Developing a comprehensive motion language.",
+                credits: [{ role: "Motion", name: "Jessica T." }]
+            }
+        ];
+
+        // Decorative images for the intro grid (indices 0-9, excluding center)
+        const gridImages = [
+            "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400",
+            "https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=400",
+            "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=400",
+            "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=400",
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400",
+            "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=400",
+            "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=400",
+            "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=400",
+            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400"
+        ];
+
+        /* --- UTILS --- */
+        const useInertiaScroll = (totalWidth) => {
+            const x = useMotionValue(0);
+            const targetX = useRef(0);
+            const windowWidth = useRef(window.innerWidth);
+            const smoothX = useSpring(x, { damping: 80, stiffness: 300, mass: 0.8 });
+
+            useEffect(() => {
+                const handleResize = () => { windowWidth.current = window.innerWidth; };
+                window.addEventListener('resize', handleResize);
+                const handleWheel = (e) => {
+                    targetX.current -= e.deltaY * 0.8; 
+                    targetX.current -= e.deltaX * 0.8;
+                    const maxScroll = -(totalWidth - windowWidth.current + 200);
+                    targetX.current = Math.max(maxScroll, Math.min(0, targetX.current));
+                };
+                window.addEventListener('wheel', handleWheel, { passive: false });
+                return () => {
+                    window.removeEventListener('wheel', handleWheel);
+                    window.removeEventListener('resize', handleResize);
+                };
+            }, [totalWidth]);
+
+            useAnimationFrame(() => { x.set(targetX.current); });
+            return smoothX;
+        };
+
+        /* --- INTRO COMPONENT --- */
+        const Intro = ({ onComplete }) => {
+            const [count, setCount] = useState(10);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setCount(prev => {
+                        if (prev >= 100) {
+                            clearInterval(interval);
+                            setTimeout(onComplete, 500); // Short delay after 100%
+                            return 100;
+                        }
+                        return Math.min(prev + Math.floor(Math.random() * 15) + 5, 100);
+                    });
+                }, 120);
+                return () => clearInterval(interval);
+            }, [onComplete]);
+
+            return (
+                <motion.div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-[#050505]"
+                    exit={{ opacity: 0, transition: { duration: 1 } }} // Fade out background but keep elements
+                >
+                    {/* The Counter */}
+                    <motion.div 
+                        className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-50 pointer-events-none"
+                        exit={{ opacity: 0 }}
+                    >
+                        <span className="text-sm font-medium text-white tabular-nums tracking-widest">
+                            {count}%
+                        </span>
+                    </motion.div>
+
+                    {/* The Grid */}
+                    <motion.div 
+                        className="grid grid-cols-5 gap-2 w-[120vw] p-10"
+                        style={{ perspective: 1000 }}
+                        initial={{ scale: 3, filter: "blur(10px)", opacity: 0 }}
+                        animate={{ scale: 1, filter: "blur(0px)", opacity: 1 }}
+                        transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                        {/* First 7 decorative items */}
+                        {gridImages.slice(0, 7).map((src, i) => (
+                            <motion.div 
+                                key={`intro-grid-${i}`}
+                                className={`relative w-full aspect-[3/4] bg-neutral-900 overflow-hidden ${i % 2 === 0 ? 'mt-8' : '-mt-8'}`}
+                                exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.5 } }}
+                            >
+                                <img src={src} className="w-full h-full object-cover opacity-50" />
+                            </motion.div>
+                        ))}
+
+                        {/* THE HERO ITEM (Center) - Matches Project 1 */}
+                        {/* IMPORTANT: layoutId connects this grid item to the slider item */}
+                        <motion.div 
+                            layoutId={`image-container-${projects[0].id}`}
+                            className="relative w-full aspect-[3/4] bg-neutral-900 overflow-hidden mt-8 z-50"
+                            transition={{ duration: 1.2, ease: [0.83, 0, 0.17, 1] }}
+                        >
+                            <motion.img 
+                                layoutId={`image-${projects[0].id}`}
+                                src={projects[0].image} 
+                                className="w-full h-full object-cover"
+                            />
+                        </motion.div>
+
+                        {/* Remaining decorative items */}
+                        {gridImages.slice(7).map((src, i) => (
+                            <motion.div 
+                                key={`intro-grid-end-${i}`}
+                                className={`relative w-full aspect-[3/4] bg-neutral-900 overflow-hidden ${i % 2 === 0 ? '-mt-8' : 'mt-8'}`}
+                                exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.5 } }}
+                            >
+                                <img src={src} className="w-full h-full object-cover opacity-50" />
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        /* --- MAIN COMPONENTS --- */
+        
+        const CustomCursor = () => {
+            const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+            useEffect(() => {
+                const update = (e) => setMousePosition({ x: e.clientX, y: e.clientY });
+                window.addEventListener('mousemove', update);
+                return () => window.removeEventListener('mousemove', update);
+            }, []);
+            return (
+                <motion.div
+                    className="fixed top-0 left-0 w-4 h-4 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference"
+                    animate={{ x: mousePosition.x - 8, y: mousePosition.y - 8 }}
+                    transition={{ type: "tween", ease: "backOut", duration: 0.1 }}
+                />
+            );
+        };
+
+        const Header = ({ onNavigate, currentView }) => (
+            <motion.header
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 1 }}
+                className="fixed top-0 left-0 w-full px-8 py-8 z-40 flex justify-between items-start text-white mix-blend-difference"
+            >
+                <div className="font-bold text-lg tracking-tight cursor-pointer" onClick={() => onNavigate('work')}>Camille.</div>
+                <div className="flex gap-12 text-sm font-medium uppercase tracking-widest">
+                    <button onClick={() => onNavigate('work')} className={`${currentView !== 'about' ? 'opacity-100' : 'opacity-40'}`}>Work</button>
+                    <button onClick={() => onNavigate('about')} className={`${currentView === 'about' ? 'opacity-100' : 'opacity-40'}`}>About</button>
+                </div>
+            </motion.header>
+        );
+
+        const SliderItem = ({ project, index, onSelect }) => {
+            const mouseX = useMotionValue(0);
+            const mouseY = useMotionValue(0);
+            
+            const handleMouseMove = (e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                mouseX.set((e.clientX - rect.left - rect.width / 2) / rect.width);
+                mouseY.set((e.clientY - rect.top - rect.height / 2) / rect.height);
+            };
+
+            const rotateX = useTransform(mouseY, [-0.5, 0.5], ["5deg", "-5deg"]);
+            const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-5deg", "5deg"]);
+
+            return (
+                <motion.div 
+                    className="relative h-[40vh] md:h-[50vh] aspect-[3/4] md:aspect-[4/5] perspective-1000 group project-card shrink-0"
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + (index * 0.1) }}
+                >
+                    <motion.div
+                        layoutId={`card-${project.id}`}
+                        onClick={() => onSelect(index)}
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={() => { mouseX.set(0); mouseY.set(0); }}
+                        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+                        className="w-full h-full cursor-pointer relative"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    >
+                        {/* IMAGE CONTAINER WITH LAYOUT ID */}
+                        <motion.div 
+                            className="w-full h-full overflow-hidden bg-neutral-900"
+                            layoutId={`image-container-${project.id}`} 
+                            transition={{ duration: 1.2, ease: [0.83, 0, 0.17, 1] }} // Matches intro exit transition
+                        >
+                            <motion.img
+                                layoutId={`image-${project.id}`}
+                                src={project.image}
+                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                            />
+                        </motion.div>
+                    </motion.div>
+
+                    <motion.div className="mt-6 md:mt-8 space-y-1">
+                        <h3 className="text-2xl md:text-3xl font-light tracking-tighter text-white">{project.title}</h3>
+                        <div className="flex items-center gap-4 text-xs text-white/40 uppercase tracking-widest">
+                            <span>{project.category}</span>
+                            <span className="w-1 h-1 bg-white/40 rounded-full" />
+                            <span>{project.year}</span>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        const Slider = ({ onSelect }) => {
+            const totalWidth = window.innerWidth * 0.35 * projects.length + window.innerWidth; 
+            const x = useInertiaScroll(totalWidth);
+            
+            // Parallax for the slider container
+            const mouseX = useMotionValue(0);
+            const mouseY = useMotionValue(0);
+            useEffect(() => {
+                const move = (e) => {
+                    mouseX.set((e.clientX / window.innerWidth) * 2 - 1);
+                    mouseY.set((e.clientY / window.innerHeight) * 2 - 1);
+                };
+                window.addEventListener('mousemove', move);
+                return () => window.removeEventListener('mousemove', move);
+            }, []);
+
+            return (
+                <motion.div 
+                    className="fixed inset-0 flex items-end pb-20 h-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1 }}
+                >
+                    <motion.div 
+                        style={{ x, translateX: useTransform(mouseX, [-1, 1], [-30, 30]), translateY: useTransform(mouseY, [-1, 1], [-30, 30]) }} 
+                        className="flex gap-[5vw] px-[15vw] items-end h-full will-change-transform"
+                    >
+                        {projects.map((project, index) => (
+                            <SliderItem 
+                                key={project.id} 
+                                project={project} 
+                                index={index} 
+                                onSelect={() => onSelect(project)} 
+                            />
+                        ))}
+                    </motion.div>
+                    
+                    <motion.div 
+                        className="fixed top-32 left-8 text-[12vw] leading-none font-bold text-white/[0.04] pointer-events-none -z-10 tracking-tighter"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1, duration: 1 }}
+                    >
+                        SELECTED
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        const ProjectDetail = ({ project, onBack }) => {
+            useEffect(() => {
+                const esc = (e) => e.key === 'Escape' && onBack();
+                window.addEventListener('keydown', esc);
+                return () => window.removeEventListener('keydown', esc);
+            }, [onBack]);
+
+            return (
+                <motion.div 
+                    className="fixed inset-0 z-50 bg-[#050505] overflow-y-auto"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                >
+                    <div className="relative w-full h-[80vh]">
+                        <button onClick={onBack} className="fixed top-8 left-8 z-50 p-4 rounded-full border border-white/10 text-white bg-black/20 backdrop-blur-md hover:bg-white hover:text-black transition-all duration-300 group">
+                            <ArrowLeft size={20} />
+                        </button>
+
+                        {/* Shared Layout ID for expansion */}
+                        <motion.div 
+                            className="w-full h-full overflow-hidden"
+                            layoutId={`image-container-${project.id}`}
+                            transition={{ duration: 0.8, ease: [0.83, 0, 0.17, 1] }}
+                        >
+                            <motion.img
+                                layoutId={`image-${project.id}`}
+                                src={project.image}
+                                className="w-full h-full object-cover"
+                            />
+                        </motion.div>
+
+                        <motion.div 
+                            className="absolute bottom-0 left-0 p-8 md:p-20 w-full bg-gradient-to-t from-black/80 to-transparent"
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            <h1 className="text-5xl md:text-8xl font-light tracking-tighter text-white mb-6">{project.title}</h1>
+                            <p className="text-white/60 max-w-xl text-lg">{project.description}</p>
+                        </motion.div>
+                    </div>
+                    <div className="min-h-screen bg-[#050505] p-20 text-white">
+                        <p>More project content would go here...</p>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const App = () => {
+            const [introComplete, setIntroComplete] = useState(false);
+            const [view, setView] = useState('work');
+            const [selectedProject, setSelectedProject] = useState(null);
+
+            return (
+                <main className="bg-[#050505] min-h-screen text-white selection:bg-white selection:text-black cursor-none overflow-hidden">
+                    <CustomCursor />
+                    
+                    {/* LayoutGroup enables layout animations across different components */}
+                    <LayoutGroup>
+                        <AnimatePresence mode="sync">
+                            {!introComplete ? (
+                                <Intro key="intro" onComplete={() => setIntroComplete(true)} />
+                            ) : (
+                                <>
+                                    <Header key="header" onNavigate={setView} currentView={view} />
+                                    
+                                    {view === 'work' && !selectedProject && (
+                                        <Slider key="slider" onSelect={setSelectedProject} />
+                                    )}
+                                    
+                                    {selectedProject && (
+                                        <ProjectDetail key="detail" project={selectedProject} onBack={() => setSelectedProject(null)} />
+                                    )}
+                                    
+                                    {view === 'about' && (
+                                        <motion.div key="about" className="fixed inset-0 pt-32 px-20 z-30" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                                            <h1 className="text-8xl tracking-tighter">Digital Alchemist</h1>
+                                        </motion.div>
+                                    )}
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </LayoutGroup>
+                </main>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
