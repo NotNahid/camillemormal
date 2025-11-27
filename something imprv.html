@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camille Mormal — Independent Designer</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* --- GLOBAL & FONTS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #050505; 
+            overflow: hidden; /* Handle scroll in JS */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Typography Utilities */
+        .clip-text { clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); }
+
+        /* =========================================
+           INTRO ANIMATION STYLES
+           ========================================= */
+
+        /* 1. THE PRE-LOADER (Black overlay with text) */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            z-index: 9999; /* Topmost layer */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-text {
+            color: #ffffff;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* 2. THE GRID CONTAINER (The 3D Intro Layer) */
+        .grid-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+            z-index: 9998; /* Just below loader, above React app */
+            pointer-events: none; /* Let clicks pass through after animation */
+            transition: opacity 1.5s ease, transform 1.5s ease; /* Fade out transition */
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            width: 120vw;
+            
+            /* INITIAL STATE: Zoomed IN and Invisible */
+            transform: scale(2.5); 
+            opacity: 0;
+            filter: blur(10px);
+            
+            /* The Animation Transition */
+            transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        opacity 1s ease, 
+                        filter 1.8s ease;
+        }
+
+        /* Active State (Drop In) */
+        .grid.active {
+            transform: scale(1);
+            opacity: 1;
+            filter: blur(0px);
+        }
+
+        /* 3. GRID ITEMS */
+        .grid-item {
+            position: relative;
+            width: 100%;
+            padding-bottom: 140%;
+            background-color: #222;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Staggered Masonry Look */
+        .grid-item:nth-child(even) { padding-bottom: 100%; margin-top: 20px; }
+        .grid-item:nth-child(3n) { padding-bottom: 160%; margin-top: -30px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- =========================================
+         INTRO HTML ELEMENTS
+         ========================================= -->
+    <div class="loader-overlay" id="loader">
+        <div class="loader-text" id="counter">10%</div>
+    </div>
+
+    <div class="grid-wrapper" id="gridWrapper">
+        <div class="grid" id="mainGrid">
+            <!-- Using decorative abstract images for the intro grid -->
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=400')"></div> 
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=400')"></div>
+            <div class="grid-item" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400')"></div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         REACT ROOT
+         ========================================= -->
+    <div id="root"></div>
+
+    <!-- =========================================
+         INTRO ANIMATION SCRIPT
+         ========================================= -->
+    <script>
+        const counter = document.getElementById('counter');
+        const loader = document.getElementById('loader');
+        const grid = document.getElementById('mainGrid');
+        const gridWrapper = document.getElementById('gridWrapper');
+
+        // 1. COUNTER LOGIC
+        let count = 10;
+        const loadInterval = setInterval(() => {
+            if (count >= 100) {
+                clearInterval(loadInterval);
+                playIntroSequence();
+            } else {
+                count += Math.floor(Math.random() * 15) + 5; 
+                if(count > 100) count = 100;
+                counter.innerText = count + "%";
+            }
+        }, 80); // Speed
+
+        // 2. THE SEQUENCE
+        function playIntroSequence() {
+            // A. Hide the Black Loader Overlay
+            loader.style.opacity = '0';
+            setTimeout(() => { loader.style.display = 'none'; }, 500);
+
+            // B. Trigger the "Drop In" of the Grid
+            setTimeout(() => {
+                grid.classList.add('active');
+            }, 200);
+
+            // C. Wait, then fade out the Grid to reveal React App
+            setTimeout(() => {
+                // Fade out and scale up slightly for a "passing through" effect
+                gridWrapper.style.opacity = '0';
+                gridWrapper.style.transform = 'scale(1.1)';
+                
+                // Remove from DOM to prevent interference
+                setTimeout(() => {
+                    gridWrapper.style.display = 'none';
+                }, 1500); // Matches the transition duration
+            }, 2200); // How long the grid stays visible before fading
+        }
+    </script>
+
+    <!-- =========================================
+         REACT APPLICATION
+         ========================================= -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
+        import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useAnimationFrame } from 'https://esm.sh/framer-motion@10.16.4?deps=react@18.2.0,react-dom@18.2.0';
+        import { ArrowLeft, Plus, Minus, Mail, ArrowUpRight } from 'https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0';
+
+        /* --- MOCK DATA --- */
+        const projects = [
+            {
+                id: 1,
+                title: "The Regeneration Suite",
+                subtitle: "Immersive Web Experience",
+                category: "Web / 3D",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+                description: "A digital sanctuary where nature and luxury intertwine. We partnered with The Savoy to create an immersive experience that honours regeneration.",
+                credits: [{ role: "Lead", name: "Alex M." }, { role: "Agency", name: "AKQA" }]
+            },
+            {
+                id: 2,
+                title: "Tactile Simplicity",
+                subtitle: "Redefining Digital Touch",
+                category: "Product",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2670&auto=format&fit=crop",
+                description: "Stripping back the unnecessary to focus purely on the sensation of time passing. An exploration of haptic feedback.",
+                credits: [{ role: "Art Dir", name: "Sarah C." }, { role: "Studio", name: "Mono" }]
+            },
+            {
+                id: 3,
+                title: "Aether Scent",
+                subtitle: "The Scent of Deep Space",
+                category: "Packaging",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=2832&auto=format&fit=crop",
+                description: "Packaging design for a conceptual fragrance line inspired by the nebulae of deep space.",
+                credits: [{ role: "3D", name: "Marcus V." }]
+            },
+            {
+                id: 4,
+                title: "Urban Silence",
+                subtitle: "Noise Cancellation",
+                category: "Campaign",
+                year: "2022",
+                image: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=2940&auto=format&fit=crop",
+                description: "Finding peace in the chaos of the city. A campaign shot entirely in 5 major capitals during rush hour.",
+                credits: [{ role: "Photo", name: "Davide R." }]
+            },
+            {
+                id: 5,
+                title: "Kinetic Soul",
+                subtitle: "Motion Language System",
+                category: "Branding",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=2938&auto=format&fit=crop",
+                description: "Developing a comprehensive motion language for a global sports brand.",
+                credits: [{ role: "Motion", name: "Jessica T." }]
+            }
+        ];
+
+        /* --- UTILS --- */
+        const useInertiaScroll = (totalWidth) => {
+            const x = useMotionValue(0);
+            const targetX = useRef(0);
+            const windowWidth = useRef(window.innerWidth);
+            
+            // Physics spring for that "heavy" feel
+            const smoothX = useSpring(x, { damping: 80, stiffness: 300, mass: 0.8 });
+
+            useEffect(() => {
+                const handleResize = () => { windowWidth.current = window.innerWidth; };
+                window.addEventListener('resize', handleResize);
+                
+                const handleWheel = (e) => {
+                    // Map vertical scroll to horizontal movement
+                    // Multiplier controls speed/weight
+                    targetX.current -= e.deltaY * 0.8; 
+                    targetX.current -= e.deltaX * 0.8;
+
+                    // Clamping
+                    const maxScroll = -(totalWidth - windowWidth.current + 200); // 200px buffer
+                    targetX.current = Math.max(maxScroll, Math.min(0, targetX.current));
+                };
+
+                window.addEventListener('wheel', handleWheel, { passive: false });
+                return () => {
+                    window.removeEventListener('wheel', handleWheel);
+                    window.removeEventListener('resize', handleResize);
+                };
+            }, [totalWidth]);
+
+            useAnimationFrame(() => {
+                x.set(targetX.current);
+            });
+
+            return smoothX;
+        };
+
+        const RevealText = ({ text, delay = 0, className = "" }) => (
+            <div className={`overflow-hidden inline-block ${className}`}>
+                <motion.span
+                    className="inline-block"
+                    initial={{ y: "110%" }}
+                    whileInView={{ y: "0%" }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay }}
+                >
+                    {text}
+                </motion.span>
+            </div>
+        );
+
+        /* --- COMPONENTS --- */
+
+        const CustomCursor = () => {
+            const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+            const [variant, setVariant] = useState("default");
+
+            useEffect(() => {
+                const updateMousePosition = (e) => setMousePosition({ x: e.clientX, y: e.clientY });
+                const handleMouseOver = (e) => {
+                    const target = e.target;
+                    if (target.closest('.project-card')) setVariant("project");
+                    else if (target.closest('button') || target.tagName === 'A') setVariant("button");
+                    else setVariant("default");
+                };
+                window.addEventListener('mousemove', updateMousePosition);
+                window.addEventListener('mouseover', handleMouseOver);
+                return () => {
+                    window.removeEventListener('mousemove', updateMousePosition);
+                    window.removeEventListener('mouseover', handleMouseOver);
+                };
+            }, []);
+
+            return (
+                <motion.div
+                    className="fixed top-0 left-0 w-4 h-4 bg-white rounded-full pointer-events-none z-[9999] mix-blend-difference"
+                    animate={{
+                        x: mousePosition.x - 8,
+                        y: mousePosition.y - 8,
+                        scale: variant === "project" ? 5 : variant === "button" ? 2 : 1,
+                        opacity: variant === "project" ? 0.2 : 1
+                    }}
+                    transition={{ type: "tween", ease: "backOut", duration: 0.15 }}
+                >
+                    {variant === 'project' && (
+                        <div className="flex items-center justify-center w-full h-full text-[3px] text-black font-bold uppercase">
+                            View
+                        </div>
+                    )}
+                </motion.div>
+            );
+        };
+
+        // NOTE: The internal React Loader has been removed since we use the Intro Animation now.
+
+        const Header = ({ onNavigate, currentView }) => (
+            <motion.header
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2.8, duration: 1 }} // Delayed to appear AFTER intro
+                className="fixed top-0 left-0 w-full px-8 py-8 z-40 flex justify-between items-start text-white mix-blend-difference"
+            >
+                <div className="font-bold text-lg tracking-tight cursor-pointer" onClick={() => onNavigate('work')}>
+                    Camille.
+                </div>
+                <div className="flex gap-12 text-sm font-medium uppercase tracking-widest">
+                    <button onClick={() => onNavigate('work')} className={`${currentView !== 'about' ? 'opacity-100' : 'opacity-40'} transition-opacity`}>Work</button>
+                    <button onClick={() => onNavigate('about')} className={`${currentView === 'about' ? 'opacity-100' : 'opacity-40'} transition-opacity`}>About</button>
+                </div>
+            </motion.header>
+        );
+
+        const SliderItem = ({ project, index, onSelect, exitState }) => {
+            const cardRef = useRef(null);
+            const mouseX = useMotionValue(0);
+            const mouseY = useMotionValue(0);
+            const rotateX = useTransform(mouseY, [-0.5, 0.5], ["5deg", "-5deg"]);
+            const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-5deg", "5deg"]);
+            
+            const handleMouseMove = (e) => {
+                const rect = cardRef.current.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                const mouseXFromCenter = e.clientX - rect.left - width / 2;
+                const mouseYFromCenter = e.clientY - rect.top - height / 2;
+                mouseX.set(mouseXFromCenter / width);
+                mouseY.set(mouseYFromCenter / height);
+            };
+
+            const handleMouseLeave = () => {
+                mouseX.set(0);
+                mouseY.set(0);
+            };
+
+            const isExiting = exitState.active;
+            const isTarget = exitState.index === index;
+            const isLeft = index < exitState.index;
+            const isRight = index > exitState.index;
+
+            const exitVariants = {
+                idle: { x: 0, y: 0, scale: 1, opacity: 1 },
+                exitLeft: { x: "-100vw", opacity: 0, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } },
+                exitRight: { x: "100vw", opacity: 0, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } },
+                exitTarget: { scale: 1.1, zIndex: 50, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }
+            };
+
+            let animateState = "idle";
+            if (isExiting) {
+                if (isTarget) animateState = "exitTarget";
+                else if (isLeft) animateState = "exitLeft";
+                else if (isRight) animateState = "exitRight";
+            }
+
+            return (
+                <motion.div 
+                    className="relative h-[60vh] md:h-[70vh] aspect-[3/4] md:aspect-[4/5] perspective-1000 group project-card shrink-0"
+                    animate={animateState}
+                    variants={exitVariants}
+                >
+                    <div className="absolute -left-12 bottom-0 overflow-hidden hidden md:block">
+                         <div className="transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[0.16,1,0.3,1] text-xs font-mono text-white/50">
+                            {`0${index + 1}`}
+                        </div>
+                    </div>
+
+                    <motion.div
+                        ref={cardRef}
+                        layoutId={isTarget ? `card-${project.id}` : undefined} 
+                        onClick={() => onSelect(index)}
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={handleMouseLeave}
+                        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+                        className="w-full h-full cursor-pointer relative"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    >
+                        <motion.div 
+                            className="w-full h-full overflow-hidden bg-neutral-900"
+                            layoutId={isTarget ? `image-container-${project.id}` : undefined}
+                        >
+                            <motion.img
+                                layoutId={isTarget ? `image-${project.id}` : undefined}
+                                src={project.image}
+                                alt={project.title}
+                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500 scale-[1.01] group-hover:scale-110 transition-transform duration-700 ease-[0.16,1,0.3,1]"
+                            />
+                        </motion.div>
+
+                        <div className="absolute top-6 right-6 z-10 mix-blend-difference text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                             <div className="relative w-6 h-6 flex items-center justify-center">
+                                <Plus size={24} className="absolute transition-all duration-300 group-hover:rotate-90 group-hover:scale-0" />
+                                <Minus size={24} className="absolute scale-0 transition-all duration-300 group-hover:scale-100" />
+                             </div>
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        className="mt-6 md:mt-8 space-y-1"
+                        animate={{ opacity: isExiting ? 0 : 1 }}
+                    >
+                        <h3 className="text-3xl md:text-5xl font-light tracking-tighter text-white leading-none">
+                            <RevealText text={project.title} delay={0.6} />
+                        </h3>
+                        <div className="flex items-center gap-4 text-sm text-white/40 uppercase tracking-widest">
+                            <RevealText text={project.category} delay={0.7} />
+                            <span className="w-1 h-1 bg-white/40 rounded-full" />
+                            <RevealText text={project.year} delay={0.8} />
+                        </div>
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        const Slider = ({ onSelect }) => {
+            const totalWidth = window.innerWidth * 0.35 * projects.length + window.innerWidth; 
+            const x = useInertiaScroll(totalWidth);
+            const [exitState, setExitState] = useState({ active: false, index: null });
+            
+            const mouseX = useMotionValue(0);
+            const mouseY = useMotionValue(0);
+            
+            useEffect(() => {
+                const handleMouseMove = (e) => {
+                    const nX = (e.clientX / window.innerWidth) * 2 - 1;
+                    const nY = (e.clientY / window.innerHeight) * 2 - 1;
+                    mouseX.set(nX * 30); 
+                    mouseY.set(nY * 30);
+                };
+                window.addEventListener('mousemove', handleMouseMove);
+                return () => window.removeEventListener('mousemove', handleMouseMove);
+            }, []);
+
+            const handleProjectSelect = (index) => {
+                setExitState({ active: true, index });
+                setTimeout(() => {
+                    onSelect(projects[index]);
+                }, 800);
+            };
+
+            return (
+                <motion.div 
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 flex items-center h-full"
+                >
+                    <motion.div 
+                        style={{ x, translateX: mouseX, translateY: mouseY }} 
+                        className="flex gap-[5vw] px-[15vw] items-center h-full will-change-transform"
+                        
+                        // Modified Initial Animation for React App 
+                        // It fades in slowly while the Intro Grid fades out
+                        initial={{ opacity: 0, scale: 0.9 }} 
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ 
+                            duration: 1.5, 
+                            ease: "easeOut",
+                            delay: 2.5 // Wait for intro to finish
+                        }}
+                    >
+                        {projects.map((project, index) => (
+                            <SliderItem 
+                                key={project.id} 
+                                project={project} 
+                                index={index} 
+                                onSelect={handleProjectSelect}
+                                exitState={exitState}
+                            />
+                        ))}
+                    </motion.div>
+                    
+                    <motion.div 
+                        className="fixed bottom-0 left-8 text-[12vw] leading-none font-bold text-white/[0.04] pointer-events-none -z-10 tracking-tighter"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 3, duration: 1 }}
+                    >
+                        SELECTED
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        const ProjectDetail = ({ project, onBack }) => {
+            useEffect(() => {
+                const handleEsc = (e) => e.key === 'Escape' && onBack();
+                window.addEventListener('keydown', handleEsc);
+                return () => window.removeEventListener('keydown', handleEsc);
+            }, [onBack]);
+
+            return (
+                <motion.div 
+                    className="fixed inset-0 z-50 bg-[#050505] overflow-y-auto"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <div className="relative w-full h-[80vh] md:h-screen">
+                        <button 
+                            onClick={onBack}
+                            className="fixed top-8 left-8 z-50 p-4 rounded-full border border-white/10 text-white bg-black/20 backdrop-blur-md hover:bg-white hover:text-black transition-all duration-300 group"
+                        >
+                            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                        </button>
+
+                        <motion.div 
+                            className="w-full h-full overflow-hidden"
+                            layoutId={`image-container-${project.id}`}
+                        >
+                            <motion.img
+                                layoutId={`image-${project.id}`}
+                                src={project.image}
+                                className="w-full h-full object-cover"
+                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            />
+                        </motion.div>
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-80" />
+
+                        <motion.div 
+                            className="absolute bottom-0 left-0 p-8 md:p-20 w-full"
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6, duration: 0.8 }}
+                        >
+                            <h1 className="text-5xl md:text-8xl font-light tracking-tighter text-white mb-6">
+                                {project.title}
+                            </h1>
+                            <div className="flex flex-col md:flex-row gap-8 md:gap-20 text-white/60">
+                                <p className="max-w-xl text-lg md:text-xl font-light leading-relaxed">
+                                    {project.description}
+                                </p>
+                                <div className="space-y-4">
+                                    {project.credits.map((c, i) => (
+                                        <div key={i} className="flex gap-4 text-sm uppercase tracking-widest">
+                                            <span className="opacity-50 w-24">{c.role}</span>
+                                            <span className="text-white">{c.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    <div className="max-w-7xl mx-auto px-8 py-32 grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <div className="bg-neutral-900 aspect-square overflow-hidden">
+                             <img src={project.image} className="w-full h-full object-cover opacity-60 hover:scale-105 transition-transform duration-700" />
+                         </div>
+                         <div className="bg-neutral-900 aspect-[4/5] overflow-hidden md:translate-y-24">
+                             <img src={project.image} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" />
+                         </div>
+                    </div>
+                    
+                    <div className="h-64 flex items-center justify-center border-t border-white/10 mt-20">
+                         <button onClick={onBack} className="text-white text-xl uppercase tracking-widest hover:text-white/50 transition-colors">
+                            Next Project
+                         </button>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const App = () => {
+            // No loading state needed - Intro HTML handles it
+            const [view, setView] = useState('work');
+            const [selectedProject, setSelectedProject] = useState(null);
+
+            const handleSelect = (project) => {
+                setSelectedProject(project);
+                setView('project');
+            };
+
+            return (
+                <main className="bg-[#050505] min-h-screen text-white selection:bg-white selection:text-black cursor-none">
+                    <CustomCursor />
+                    
+                    <Header onNavigate={(v) => { setView(v); setSelectedProject(null); }} currentView={view} />
+                    
+                    <AnimatePresence mode="wait">
+                        {view === 'work' && (
+                            <Slider key="slider" onSelect={handleSelect} />
+                        )}
+                        {view === 'project' && selectedProject && (
+                            <ProjectDetail key="project" project={selectedProject} onBack={() => setView('work')} />
+                        )}
+                        {view === 'about' && (
+                            <motion.div 
+                                key="about"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 pt-32 px-8 md:px-20 text-white z-30"
+                            >
+                                <h1 className="text-6xl md:text-9xl tracking-tighter font-light mb-12">
+                                    Digital<br/>Alchemist
+                                </h1>
+                                <p className="text-xl md:text-2xl text-white/50 max-w-2xl leading-relaxed">
+                                    Creating digital experiences that blur the line between utility and art.
+                                    Based in New York, working globally.
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </main>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
