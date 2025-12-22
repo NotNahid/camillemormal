@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Independent Designer Portfolio</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: black;
+            cursor: none;
+        }
+        @media (max-width: 768px) {
+            body { cursor: auto; }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #fff 0%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef, useCallback } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
+        import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useAnimation } from 'https://esm.sh/framer-motion@10.16.4?deps=react@18.2.0,react-dom@18.2.0';
+        import { ArrowLeft, Plus, ArrowUpRight, Mail, ExternalLink } from 'https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0';
+
+        const projects = [
+            {
+                id: 1,
+                title: "The Regeneration Suite",
+                subtitle: "A Restorative & Immersive Experience",
+                category: "Immersive Web",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1550780595-09c063b06c88?q=80&w=2787&auto=format&fit=crop",
+                color: "#1a472a",
+                description: "To celebrate 100 years of Gucci, we partnered with The Savoy to create an immersive experience that honours regeneration. A digital sanctuary where nature and luxury intertwine.",
+                credits: [
+                    { role: "Lead Designer", name: "Alex Morgan" },
+                    { role: "Agency", name: "AKQA Amsterdam" },
+                    { role: "Client", name: "Gucci / The Savoy" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Simplicity & Tactility",
+                subtitle: "Redefining Digital Touch",
+                category: "Product Design",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?q=80&w=2942&auto=format&fit=crop",
+                color: "#2d2d2d",
+                description: "An exploration of haptic feedback in visual interfaces. We stripped back the unnecessary to focus purely on the sensation of time passing.",
+                credits: [
+                    { role: "Art Director", name: "Sarah Chen" },
+                    { role: "Studio", name: "Mono Design" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Reimagining Loyalty",
+                subtitle: "Connection Beyond Transaction",
+                category: "Brand Strategy",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=2550&auto=format&fit=crop",
+                color: "#4a1942",
+                description: "A complete overhaul of the loyalty program for a major fashion house, focusing on emotional resonance rather than points collection.",
+                credits: [
+                    { role: "Strategy", name: "James Wilson" },
+                    { role: "Visuals", name: "Luna Creative" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Urban Silence",
+                subtitle: "Noise Cancellation Campaign",
+                category: "Advertising",
+                year: "2022",
+                image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=3386&auto=format&fit=crop",
+                color: "#1e3a5f",
+                description: "Finding peace in the chaos of the city. A campaign shot entirely in 5 major capitals during rush hour.",
+                credits: [
+                    { role: "Photographer", name: "Davide Rossi" },
+                    { role: "Creative Dir.", name: "Elena S." }
+                ]
+            },
+            {
+                id: 5,
+                title: "Aether",
+                subtitle: "The Scent of Space",
+                category: "Packaging",
+                year: "2024",
+                image: "https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=2832&auto=format&fit=crop",
+                color: "#2a1f4e",
+                description: "Packaging design for a conceptual fragrance line inspired by the nebulae of deep space.",
+                credits: [
+                    { role: "3D Artist", name: "Marcus V." }
+                ]
+            },
+            {
+                id: 6,
+                title: "Kinetic Soul",
+                subtitle: "Motion Language System",
+                category: "Motion",
+                year: "2023",
+                image: "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?q=80&w=2938&auto=format&fit=crop",
+                color: "#3d2314",
+                description: "Developing a comprehensive motion language for a global sports brand.",
+                credits: [
+                    { role: "Motion Lead", name: "Jessica T." }
+                ]
+            },
+        ];
+
+        // Enhanced Custom Cursor with labels
+        const CustomCursor = ({ cursorLabel }) => {
+            const cursorX = useMotionValue(-100);
+            const cursorY = useMotionValue(-100);
+            const cursorSize = useMotionValue(8);
+            
+            const springConfig = { damping: 25, stiffness: 400 };
+            const cursorXSpring = useSpring(cursorX, springConfig);
+            const cursorYSpring = useSpring(cursorY, springConfig);
+            const sizeSpring = useSpring(cursorSize, springConfig);
+
+            useEffect(() => {
+                const moveCursor = (e) => {
+                    cursorX.set(e.clientX);
+                    cursorY.set(e.clientY);
+                };
+
+                const handleMouseOver = (e) => {
+                    const target = e.target;
+                    if (target.tagName === 'A' || target.tagName === 'BUTTON' || target.closest('[role="button"]') || target.closest('.cursor-pointer')) {
+                        cursorSize.set(48);
+                    } else {
+                        cursorSize.set(8);
+                    }
+                };
+
+                window.addEventListener('mousemove', moveCursor);
+                window.addEventListener('mouseover', handleMouseOver);
+
+                return () => {
+                    window.removeEventListener('mousemove', moveCursor);
+                    window.removeEventListener('mouseover', handleMouseOver);
+                };
+            }, []);
+
+            return (
+                <React.Fragment>
+                    <motion.div
+                        className="fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference flex items-center justify-center"
+                        style={{
+                            x: cursorXSpring,
+                            y: cursorYSpring,
+                            width: sizeSpring,
+                            height: sizeSpring,
+                            translateX: '-50%',
+                            translateY: '-50%',
+                        }}
+                    >
+                        <motion.div 
+                            className="w-full h-full rounded-full bg-white"
+                            animate={{ scale: cursorLabel ? 1.5 : 1 }}
+                        />
+                        <AnimatePresence>
+                            {cursorLabel && (
+                                <motion.span
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.5 }}
+                                    className="absolute text-[8px] font-medium uppercase tracking-wider text-black"
+                                >
+                                    {cursorLabel}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                </React.Fragment>
+            );
+        };
+
+        // Page Transition Overlay
+        const PageTransition = ({ isAnimating }) => {
+            return (
+                <AnimatePresence>
+                    {isAnimating && (
+                        <motion.div
+                            className="fixed inset-0 z-[100] pointer-events-none"
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                        >
+                            {[...Array(5)].map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    className="absolute inset-0 bg-neutral-900"
+                                    style={{ originY: 0 }}
+                                    initial={{ scaleY: 0 }}
+                                    animate={{ 
+                                        scaleY: [0, 1, 1, 0],
+                                        originY: [0, 0, 1, 1]
+                                    }}
+                                    transition={{
+                                        duration: 1.2,
+                                        ease: [0.76, 0, 0.24, 1],
+                                        delay: i * 0.05,
+                                        times: [0, 0.4, 0.6, 1]
+                                    }}
+                                />
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            );
+        };
+
+        // Loader with progress bar
+        const Loader = ({ onComplete }) => {
+            const [count, setCount] = useState(0);
+
+            useEffect(() => {
+                const duration = 2000;
+                const intervalTime = 20;
+                const steps = duration / intervalTime;
+                let currentStep = 0;
+
+                const interval = setInterval(() => {
+                    currentStep++;
+                    const progress = Math.min(Math.round((currentStep / steps) * 100), 100);
+                    setCount(progress);
+
+                    if (currentStep >= steps) {
+                        clearInterval(interval);
+                        setTimeout(onComplete, 500);
+                    }
+                }, intervalTime);
+
+                return () => clearInterval(interval);
+            }, [onComplete]);
+
+            return (
+                <motion.div
+                    className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black text-white"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }}
+                >
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center"
+                    >
+                        <div className="text-xs uppercase tracking-[0.3em] text-white/50 mb-8">Loading Experience</div>
+                        <div className="text-6xl md:text-8xl font-light tabular-nums tracking-tight">
+                            {count}
+                        </div>
+                        <div className="w-48 h-px bg-white/10 mt-8 mx-auto overflow-hidden">
+                            <motion.div 
+                                className="h-full bg-white"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${count}%` }}
+                                transition={{ ease: "linear" }}
+                            />
+                        </div>
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        // Magnetic Button Component
+        const MagneticButton = ({ children, className, onClick }) => {
+            const ref = useRef(null);
+            const x = useMotionValue(0);
+            const y = useMotionValue(0);
+            
+            const springConfig = { damping: 15, stiffness: 150 };
+            const xSpring = useSpring(x, springConfig);
+            const ySpring = useSpring(y, springConfig);
+
+            const handleMouseMove = (e) => {
+                const rect = ref.current.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                x.set((e.clientX - centerX) * 0.3);
+                y.set((e.clientY - centerY) * 0.3);
+            };
+
+            const handleMouseLeave = () => {
+                x.set(0);
+                y.set(0);
+            };
+
+            return (
+                <motion.button
+                    ref={ref}
+                    onClick={onClick}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                    style={{ x: xSpring, y: ySpring }}
+                    className={className}
+                    role="button"
+                >
+                    {children}
+                </motion.button>
+            );
+        };
+
+        // Time-based greeting
+        const getGreeting = () => {
+            const hour = new Date().getHours();
+            if (hour < 12) return "Good Morning";
+            if (hour < 18) return "Good Afternoon";
+            return "Good Evening";
+        };
+
+        const Header = ({ currentView, onNavigate }) => {
+            const [time, setTime] = useState(new Date());
+
+            useEffect(() => {
+                const timer = setInterval(() => setTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            return (
+                <motion.header
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.8 }}
+                    className="fixed top-0 left-0 w-full px-6 md:px-8 py-6 z-40 flex justify-between items-start mix-blend-difference text-white"
+                >
+                    <div className="flex gap-6 md:gap-8 text-sm font-medium tracking-wide uppercase">
+                        <MagneticButton 
+                            onClick={() => onNavigate('work')}
+                            className={`cursor-pointer hover:opacity-100 transition-opacity ${currentView === 'work' ? 'opacity-100' : 'opacity-50'}`}
+                        >
+                            Work
+                        </MagneticButton>
+                        <MagneticButton 
+                            onClick={() => onNavigate('about')}
+                            className={`cursor-pointer hover:opacity-100 transition-opacity ${currentView === 'about' ? 'opacity-100' : 'opacity-50'}`}
+                        >
+                            About
+                        </MagneticButton>
+                    </div>
+                    
+                    <div className="hidden md:flex flex-col items-end text-xs opacity-50 uppercase tracking-widest">
+                        <span>{getGreeting()}</span>
+                        <span className="tabular-nums mt-1">
+                            {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    </div>
+                </motion.header>
+            );
+        };
+
+        const About = () => {
+            const containerRef = useRef(null);
+            const { scrollYProgress } = useScroll({ container: containerRef });
+            
+            return (
+                <motion.div
+                    ref={containerRef}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="fixed inset-0 bg-black z-20 pt-24 md:pt-32 px-6 md:px-20 pb-20 overflow-y-auto no-scrollbar text-white"
+                >
+                    {/* Scroll Progress */}
+                    <motion.div 
+                        className="fixed top-0 left-0 h-px bg-white origin-left z-50"
+                        style={{ scaleX: scrollYProgress, width: '100%' }}
+                    />
+
+                    <div className="max-w-5xl mx-auto">
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-light tracking-tight mb-16 leading-[1.1]">
+                                Crafting digital experiences that exist at the intersection of{' '}
+                                <span className="text-gradient">technology</span>,{' '}
+                                <span className="text-gradient">art</span>, and{' '}
+                                <span className="text-gradient">human emotion</span>.
+                            </h1>
+                        </motion.div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
+                            <motion.div
+                                initial={{ y: 50, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.4, duration: 0.8 }}
+                                className="space-y-8 text-lg text-white/70 leading-relaxed"
+                            >
+                                <p>
+                                    I am an independent designer and art director with over a decade of experience working with global brands and early-stage startups. My approach is rooted in reduction—stripping away the noise to reveal the essential core of a story.
+                                </p>
+                                <p>
+                                    Currently based in New York, operating globally. I am available for freelance projects, art direction, and design consultation.
+                                </p>
+                                <div className="pt-4">
+                                    <MagneticButton className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-white/90 transition-colors">
+                                        <Mail size={18} />
+                                        <span>Get in Touch</span>
+                                    </MagneticButton>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ y: 50, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.6, duration: 0.8 }}
+                            >
+                                <h3 className="text-xs uppercase tracking-widest text-white/40 mb-8">Capabilities</h3>
+                                <ul className="space-y-0 mb-16">
+                                    {['Art Direction', 'UI/UX Design', 'Brand Identity', 'Motion Design', 'Creative Development', 'Design Systems'].map((item, i) => (
+                                        <motion.li 
+                                            key={item}
+                                            className="border-b border-white/10 py-4 flex justify-between items-center group cursor-pointer"
+                                            whileHover={{ x: 10 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <span>{item}</span>
+                                            <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </motion.li>
+                                    ))}
+                                </ul>
+
+                                <h3 className="text-xs uppercase tracking-widest text-white/40 mb-8">Connect</h3>
+                                <div className="flex flex-wrap gap-4">
+                                    {['Instagram', 'Twitter', 'LinkedIn', 'Dribbble'].map((platform) => (
+                                        <a 
+                                            key={platform}
+                                            href="#" 
+                                            className="px-4 py-2 glass rounded-full text-sm hover:bg-white/10 transition-colors flex items-center gap-2 group"
+                                            role="button"
+                                        >
+                                            <span>{platform}</span>
+                                            <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </a>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </div>
+
+                        {/* Selected Clients */}
+                        <motion.div
+                            initial={{ y: 50, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.8, duration: 0.8 }}
+                            className="mt-32 pt-16 border-t border-white/10"
+                        >
+                            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-12">Selected Clients</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-2xl md:text-3xl font-light text-white/30">
+                                {['Apple', 'Google', 'Nike', 'Gucci', 'Sony', 'BMW', 'Spotify', 'Airbnb'].map((client, i) => (
+                                    <motion.div 
+                                        key={client}
+                                        whileHover={{ color: 'rgba(255,255,255,0.8)' }}
+                                        className="cursor-default"
+                                    >
+                                        {client}
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const ProjectDetail = ({ project, onBack, onNext }) => {
+            const containerRef = useRef(null);
+            const { scrollYProgress } = useScroll({ container: containerRef });
+            
+            const imageScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
+            const imageOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.3]);
+            const titleY = useTransform(scrollYProgress, [0, 0.3], [0, -100]);
+            const contentY = useTransform(scrollYProgress, [0, 0.2], [100, 0]);
+
+            const currentIndex = projects.findIndex(p => p.id === project.id);
+            const nextProject = projects[(currentIndex + 1) % projects.length];
+
+            useEffect(() => {
+                if(containerRef.current) {
+                    containerRef.current.scrollTop = 0;
+                }
+            }, [project]);
+
+            return (
+                <motion.div
+                    ref={containerRef}
+                    className="fixed inset-0 z-30 overflow-y-auto no-scrollbar"
+                    style={{ backgroundColor: project.color || '#0a0a0a' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                >
+                    {/* Scroll Progress */}
+                    <motion.div 
+                        className="fixed top-0 left-0 h-px bg-white/50 origin-left z-50"
+                        style={{ scaleX: scrollYProgress, width: '100%' }}
+                    />
+
+                    {/* Back Button */}
+                    <motion.button
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 }}
+                        onClick={onBack}
+                        className="fixed top-6 left-6 z-50 flex items-center gap-2 text-white group"
+                        role="button"
+                    >
+                        <div className="p-3 glass rounded-full group-hover:bg-white group-hover:text-black transition-all duration-300">
+                            <ArrowLeft size={16} />
+                        </div>
+                    </motion.button>
+
+                    {/* Project Number */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="fixed top-6 right-6 z-50 text-white/50 text-sm font-medium"
+                    >
+                        {String(currentIndex + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}
+                    </motion.div>
+
+                    {/* Hero Section */}
+                    <div className="relative h-screen w-full overflow-hidden">
+                        <motion.div 
+                            className="absolute inset-0 w-full h-full"
+                            style={{ scale: imageScale, opacity: imageOpacity }}
+                        >
+                            <motion.img
+                                layoutId={`image-${project.id}`}
+                                src={project.image}
+                                alt={project.title}
+                                className="w-full h-full object-cover"
+                                transition={{ duration: 0.8, ease: [0.6, 0.01, -0.05, 0.9] }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
+                        </motion.div>
+
+                        <motion.div 
+                            style={{ y: titleY }}
+                            className="absolute inset-0 flex flex-col items-center justify-center text-white"
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4, duration: 0.8 }}
+                                className="text-center px-4"
+                            >
+                                <motion.span 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.6 }}
+                                    className="text-xs uppercase tracking-[0.3em] text-white/60 block mb-4"
+                                >
+                                    {project.category} — {project.year}
+                                </motion.span>
+                                <h1 className="text-4xl md:text-7xl lg:text-8xl font-light tracking-tight mb-4">
+                                    {project.title}
+                                </h1>
+                                <p className="text-lg md:text-2xl font-light opacity-80 max-w-2xl mx-auto">
+                                    {project.subtitle}
+                                </p>
+                            </motion.div>
+                        </motion.div>
+
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1.2, duration: 1 }}
+                            className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+                        >
+                            <span className="text-white/40 text-xs uppercase tracking-widest">Scroll</span>
+                            <motion.div 
+                                className="w-px h-12 bg-white/20 overflow-hidden"
+                                initial={{ height: 0 }}
+                                animate={{ height: 48 }}
+                                transition={{ delay: 1.4, duration: 0.8 }}
+                            >
+                                <motion.div 
+                                    className="w-full h-4 bg-white/60"
+                                    animate={{ y: [0, 48, 0] }}
+                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                />
+                            </motion.div>
+                        </motion.div>
+                    </div>
+
+                    {/* Content Section */}
+                    <motion.div 
+                        style={{ y: contentY }}
+                        className="relative z-10 bg-[#0a0a0a] min-h-screen px-6 py-24 md:px-20 md:py-32"
+                    >
+                        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-16 text-white">
+                            <div className="md:col-span-4 space-y-12">
+                                <div>
+                                    <h3 className="text-xs uppercase tracking-widest text-white/40 mb-6">Overview</h3>
+                                    <p className="text-white/70 leading-relaxed">{project.description}</p>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xs uppercase tracking-widest text-white/40 mb-6">Credits</h3>
+                                    <ul className="space-y-4">
+                                        {project.credits.map((credit, i) => (
+                                            <motion.li 
+                                                key={i}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                whileInView={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.1 }}
+                                                viewport={{ once: true }}
+                                            >
+                                                <span className="block text-xs text-white/40 uppercase mb-1">{credit.role}</span>
+                                                <span className="text-lg">{credit.name}</span>
+                                            </motion.li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                <div className="pt-4">
+                                    <MagneticButton className="inline-flex items-center gap-3 px-6 py-3 glass rounded-full text-sm hover:bg-white/10 transition-colors">
+                                        <span>View Live Project</span>
+                                        <ExternalLink size={14} />
+                                    </MagneticButton>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <motion.div 
+                                        className="aspect-[4/5] bg-neutral-800 overflow-hidden"
+                                        initial={{ opacity: 0, y: 50 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.8 }}
+                                        viewport={{ once: true }}
+                                    >
+                                        <img src={project.image} className="w-full h-full object-cover opacity-80 hover:scale-110 transition-transform duration-1000" alt="Detail 1" />
+                                    </motion.div>
+                                    <motion.div 
+                                        className="aspect-[4/5] bg-neutral-800 overflow-hidden md:mt-20"
+                                        initial={{ opacity: 0, y: 50 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.8, delay: 0.2 }}
+                                        viewport={{ once: true }}
+                                    >
+                                        <img src={project.image} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" alt="Detail 2" />
+                                    </motion.div>
+                                </div>
+                                
+                                <motion.div 
+                                    className="mt-16 p-8 glass rounded-2xl"
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.8 }}
+                                    viewport={{ once: true }}
+                                >
+                                    <blockquote className="text-2xl md:text-3xl font-light leading-relaxed text-white/80">
+                                        "This project represented a shift in how we approach digital design. By focusing on the core user experience, we achieved something truly timeless."
+                                    </blockquote>
+                                </motion.div>
+                            </div>
+                        </div>
+                        
+                        {/* Next Project */}
+                        <motion.div 
+                            className="mt-40 border-t border-white/10 pt-20"
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.8 }}
+                            viewport={{ once: true }}
+                        >
+                            <h4 className="text-xs uppercase tracking-widest text-white/40 mb-8">Next Project</h4>
+                            <motion.div 
+                                onClick={() => onNext(nextProject)}
+                                className="group cursor-pointer relative overflow-hidden py-8"
+                                whileHover="hover"
+                                role="button"
+                            >
+                                <motion.div
+                                    className="absolute inset-0 bg-white/5"
+                                    initial={{ scaleX: 0 }}
+                                    variants={{ hover: { scaleX: 1 } }}
+                                    transition={{ duration: 0.4 }}
+                                    style={{ originX: 0 }}
+                                />
+                                <div className="relative flex items-center justify-between">
+                                    <div>
+                                        <span className="text-4xl md:text-6xl lg:text-7xl text-white font-light">
+                                            {nextProject.title}
+                                        </span>
+                                        <span className="block text-white/50 text-sm mt-2">{nextProject.category}</span>
+                                    </div>
+                                    <motion.div
+                                        variants={{ hover: { x: 20, rotate: 45 } }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <ArrowUpRight size={48} className="text-white/50 group-hover:text-white transition-colors" />
+                                    </motion.div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        const SliderItem = ({ project, onSelect, index }) => {
+            const [isHovered, setIsHovered] = useState(false);
+
+            return (
+                <motion.div
+                    className="relative shrink-0 w-[70vw] md:w-[28vw] aspect-[3/4] group"
+                    onHoverStart={() => setIsHovered(true)}
+                    onHoverEnd={() => setIsHovered(false)}
+                >
+                    <motion.div
+                        layoutId={`image-${project.id}`}
+                        onClick={onSelect}
+                        className="w-full h-full overflow-hidden bg-neutral-900 cursor-pointer relative rounded-lg"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        <motion.img
+                            src={project.image}
+                            alt={project.title}
+                            className="w-full h-full object-cover"
+                            animate={{ 
+                                scale: isHovered ? 1.1 : 1,
+                                filter: isHovered ? 'brightness(1)' : 'brightness(0.7)'
+                            }}
+                            transition={{ duration: 0.6 }}
+                        />
+                        
+                        <motion.div 
+                            className="absolute inset-0 flex items-center justify-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: isHovered ? 1 : 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <motion.div 
+                                className="w-16 h-16 rounded-full glass flex items-center justify-center text-white"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: isHovered ? 1 : 0 }}
+                                transition={{ duration: 0.3, delay: 0.1 }}
+                            >
+                                <Plus size={24} />
+                            </motion.div>
+                        </motion.div>
+
+                        {/* Project info overlay */}
+                        <motion.div 
+                            className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <span className="text-xs uppercase tracking-widest text-white/60">{project.category}</span>
+                            <h3 className="text-xl md:text-2xl font-light text-white mt-1">{project.title}</h3>
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Index number */}
+                    <div className="absolute -bottom-12 left-0 text-white/20 text-sm font-medium">
+                        {String(index + 1).padStart(2, '0')}
+                    </div>
+                </motion.div>
+            );
+        };
+
+        const Slider = ({ onSelect }) => {
+            const containerRef = useRef(null);
+            const x = useMotionValue(0);
+            const [activeIndex, setActiveIndex] = useState(0);
+            const [isDragging, setIsDragging] = useState(false);
+
+            // Calculate active index based on scroll position
+            useEffect(() => {
+                const unsubscribe = x.on("change", (latest) => {
+                    const itemWidth = window.innerWidth > 768 ? window.innerWidth * 0.28 + 32 : window.innerWidth * 0.7 + 16;
+                    const index = Math.round(Math.abs(latest) / itemWidth);
+                    setActiveIndex(Math.min(index, projects.length - 1));
+                });
+                return unsubscribe;
+            }, []);
+
+            return (
+                <motion.div 
+                    ref={containerRef}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                    className="relative w-full h-screen flex items-center overflow-hidden"
+                >
+                    {/* Background Text */}
+                    <div className="fixed inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+                        <motion.span 
+                            className="text-[25vw] font-bold text-white/[0.02] whitespace-nowrap"
+                            animate={{ x: [0, -200, 0] }}
+                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                        >
+                            SELECTED WORK • SELECTED WORK •
+                        </motion.span>
+                    </div>
+
+                    {/* Slider */}
+                    <motion.div 
+                        className="flex gap-4 px-[15vw] md:gap-8 md:px-[36vw] pb-16"
+                        drag="x"
+                        style={{ x, cursor: isDragging ? 'grabbing' : 'grab' }}
+                        onDragStart={() => setIsDragging(true)}
+                        onDragEnd={() => setIsDragging(false)}
+                        dragConstraints={{ left: -(projects.length - 1) * (window.innerWidth > 768 ? window.innerWidth * 0.28 + 32 : window.innerWidth * 0.7 + 16), right: 0 }} 
+                        dragElastic={0.1}
+                        dragTransition={{ bounceStiffness: 600, bounceDamping: 30 }}
+                    >
+                        {projects.map((project, index) => (
+                            <SliderItem 
+                                key={project.id} 
+                                project={project} 
+                                index={index}
+                                onSelect={() => !isDragging && onSelect(project)} 
+                            />
+                        ))}
+                    </motion.div>
+
+                    {/* Index Indicator */}
+                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                        <span className="text-white text-2xl font-light tabular-nums">
+                            {String(activeIndex + 1).padStart(2, '0')}
+                        </span>
+                        <div className="w-24 h-px bg-white/20 overflow-hidden">
+                            <motion.div 
+                                className="h-full bg-white"
+                                animate={{ width: `${((activeIndex + 1) / projects.length) * 100}%` }}
+                                transition={{ duration: 0.3 }}
+                            />
+                        </div>
+                        <span className="text-white/40 text-sm tabular-nums">
+                            {String(projects.length).padStart(2, '0')}
+                        </span>
+                    </div>
+
+                    {/* Navigation hints */}
+                    <motion.div 
+                        className="fixed bottom-8 right-8 text-white/30 text-xs uppercase tracking-widest hidden md:block"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1 }}
+                    >
+                        Drag to explore
+                    </motion.div>
+                </motion.div>
+            );
+        };
+
+        const App = () => {
+            const [loading, setLoading] = useState(true);
+            const [view, setView] = useState('work');
+            const [selectedProject, setSelectedProject] = useState(null);
+            const [isTransitioning, setIsTransitioning] = useState(false);
+            const [cursorLabel, setCursorLabel] = useState('');
+
+            const handleNavigate = useCallback((target) => {
+                if (target === view && !selectedProject) return;
+                
+                setIsTransitioning(true);
+                setTimeout(() => {
+                    setSelectedProject(null);
+                    setView(target);
+                    setIsTransitioning(false);
+                }, 600);
+            }, [view, selectedProject]);
+
+            const handleSelectProject = useCallback((project) => {
+                setSelectedProject(project);
+                setView('project');
+            }, []);
+
+            const handleNextProject = useCallback((project) => {
+                setIsTransitioning(true);
+                setTimeout(() => {
+                    setSelectedProject(project);
+                    setIsTransitioning(false);
+                }, 600);
+            }, []);
+
+            useEffect(() => {
+                if (view === 'project' || view === 'about') {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = 'auto';
+                }
+            }, [view]);
+
+            return (
+                <div className="bg-black min-h-screen text-white font-sans selection:bg-white selection:text-black">
+                    <div className="hidden md:block">
+                        <CustomCursor cursorLabel={cursorLabel} />
+                    </div>
+
+                    <PageTransition isAnimating={isTransitioning} />
+
+                    <AnimatePresence mode="wait">
+                        {loading ? (
+                            <Loader key="loader" onComplete={() => setLoading(false)} />
+                        ) : (
+                            <motion.div key="content" className="relative">
+                                <Header 
+                                    currentView={view === 'project' ? 'work' : view} 
+                                    onNavigate={handleNavigate} 
+                                />
+                                
+                                <AnimatePresence mode="wait">
+                                    {view === 'about' && <About key="about" />}
+                                    
+                                    {view === 'project' && selectedProject && (
+                                        <ProjectDetail 
+                                            key={`detail-${selectedProject.id}`}
+                                            project={selectedProject} 
+                                            onBack={() => handleNavigate('work')}
+                                            onNext={handleNextProject}
+                                        />
+                                    )}
+                                    
+                                    {view === 'work' && (
+                                        <Slider key="slider" onSelect={handleSelectProject} />
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
