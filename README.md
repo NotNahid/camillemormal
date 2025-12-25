@@ -39,3 +39,31 @@ https://notnahid.github.io/camillemormal/
 ![Coffee](https://img.shields.io/badge/Made%20with-Coffee-6F4E37?style=for-the-badge&logo=coffeescript)
 
 ![VSCode](https://img.shields.io/badge/Powered%20by-VS%20Code-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)
+
+
+![LeetCode](https://leetcard.jacoblin.cool/NotNahid?theme=radical&font=Fira%20Code&ext=heatmap)
+
+![StackOverflow](https://github-readme-stackoverflow.vercel.app/?userID=123456&theme=dark)
+
+![WakaTime](https://github-readme-stats.vercel.app/api/wakatime?username=NotNahid&theme=radical&layout=compact)
+
+
+![Chess](https://github-readme-chess-stats.vercel.app/api?username=magnuscarlsen&theme=dark)
+
+![Pokemon](https://pokemon-readme-card.vercel.app/api/random?theme=dark&height=200)
+
+![Steam](https://github-readme-steam.vercel.app/api?id=76561198000000000&theme=dark)
+
+
+![Matrix](https://capsule-render.vercel.app/api?type=rect&color=00FF00&height=100&section=header&text=Wake%20Up%20Neo...&fontSize=40&animation=twinkling)
+
+![Soft UI](https://capsule-render.vercel.app/api?type=soft&color=auto&height=150&section=header&text=Design%20%26%20Code&fontSize=50)
+
+![Isometric](https://github-readme-activity-graph.vercel.app/graph?username=NotNahid&theme=react-dark&bg_color=20232a&hide_border=true)
+
+
+![Meme](https://github-readme-memes.vercel.app/api?theme=dark)
+
+![Fake Graph](https://github-readme-activity-graph.vercel.app/graph?username=torvalds&theme=github-compact)
+
+![Clock](https://readme-typing-svg.herokuapp.com?font=Orbitron&pause=1000&color=00FF00&width=435&lines=SYSTEM.TIME_NOW...;LOADING...;READY.)
